@@ -1,19 +1,21 @@
+from typing import List
+
 from fastapi import APIRouter, Depends
 
 from app.dependencies.task import get_task_service
-from app.schemas.task import TaskCreate, TaskUpdate
+from app.schemas.task import TaskCreate, TaskUpdate, TaskResponse
 
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("/", response_model=List[TaskResponse])
 def get_tasks(
     service=Depends(get_task_service),
 ):
     return service.get_tasks()
 
 
-@router.get("/{task_id}")
+@router.get("/{task_id}", response_model=TaskResponse)
 def get_task(
     task_id: int,
     service=Depends(get_task_service),
@@ -21,7 +23,7 @@ def get_task(
     return service.get_task(task_id)
 
 
-@router.post("/")
+@router.post("/", response_model=TaskResponse)
 def create_task(
     task: TaskCreate,
     service=Depends(get_task_service),
@@ -29,7 +31,7 @@ def create_task(
     return service.create_task(task)
 
 
-@router.put("/{task_id}")
+@router.put("/{task_id}", response_model=TaskResponse)
 def update_task(
     task_id: int,
     task: TaskUpdate,
