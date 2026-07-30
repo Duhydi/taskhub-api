@@ -1,33 +1,75 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.task import Task
 from app.repositories import task_repository
 from app.schemas.task import TaskCreate, TaskUpdate
 
+from fastapi import HTTPException, status
 
-def get_tasks():
-    return task_repository.get_all()
+class TaskService:
 
+    def __init__(self, db: AsyncSession):
+        self.db = db
 
-def get_task(task_id: int):
-    return task_repository.get_by_id(task_id)
+    async def get_tasks(self):
+        return await task_repository.get_all(self.db)
 
+    async def get_task(self, task_id: int):
+        return await task_repository.get_by_id(
+            self.db,
+            task_id,
+        )
 
-def create_task(task: TaskCreate):
-    new_task = {
-        "id": len(task_repository.get_all()) + 1,
-        "title": task.title,
-        "description": task.description,
-    }
+    async def create_task(self, task: TaskCreate):
+        new_task = Task(
+            title=task.title,
+            description=task.description,
+        )
 
-    return task_repository.create(new_task)
+        return await task_repository.create(
+            self.db,
+            new_task,
+        )
 
+    async def update_task(
+        self,
+        task_id: int,
+        task: TaskUpdate,
+    ):
+        db_task = await task_repository.get_by_id(
+            self.db,
+            task_id,
+        )
 
-def update_task(task_id: int, task: TaskUpdate):
-    data = {
-        "title": task.title,
-        "description": task.description,
-    }
+        if db_task is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found",
+            )
 
-    return task_repository.update(task_id, data)
+        db_task.title = task.title
+        db_task.description = task.description
 
+        return await task_repository.update(
+            self.db,
+            db_task,
+        )
 
-def delete_task(task_id: int):
-    return task_repository.delete(task_id)
+    async def delete_task(self, task_id: int):
+        db_task = await task_repository.get_by_id(
+            self.db,
+            task_id,
+        )
+
+        if db_task is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found",
+            )
+
+        await task_repository.delete(
+            self.db,
+            db_task,
+        )
+
+        return
