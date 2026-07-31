@@ -1,48 +1,56 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from app.dependencies.task import get_task_service
 from app.schemas.task import TaskCreate, TaskUpdate, TaskResponse
+from app.services.task_service import TaskService
 
 router = APIRouter()
 
 
 @router.get("/", response_model=List[TaskResponse])
-def get_tasks(
-    service=Depends(get_task_service),
+async def get_tasks(
+    service: TaskService = Depends(get_task_service),
 ):
-    return service.get_tasks()
+    return await service.get_tasks()
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
-def get_task(
+async def get_task(
     task_id: int,
-    service=Depends(get_task_service),
+    service: TaskService = Depends(get_task_service),
 ):
-    return service.get_task(task_id)
+    return await service.get_task(task_id)
 
 
-@router.post("/", response_model=TaskResponse)
-def create_task(
+@router.post(
+    "/",
+    response_model=TaskResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_task(
     task: TaskCreate,
-    service=Depends(get_task_service),
+    service: TaskService = Depends(get_task_service),
 ):
-    return service.create_task(task)
+    return await service.create_task(task)
 
 
 @router.put("/{task_id}", response_model=TaskResponse)
-def update_task(
+async def update_task(
     task_id: int,
     task: TaskUpdate,
-    service=Depends(get_task_service),
+    service: TaskService = Depends(get_task_service),
 ):
-    return service.update_task(task_id, task)
+    return await service.update_task(task_id, task)
 
 
-@router.delete("/{task_id}")
-def delete_task(
+@router.delete(
+    "/{task_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_task(
     task_id: int,
-    service=Depends(get_task_service),
+    service: TaskService = Depends(get_task_service),
 ):
-    return service.delete_task(task_id)
+    await service.delete_task(task_id)

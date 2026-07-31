@@ -1,39 +1,34 @@
-tasks = []
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.task import Task
 
 
-def get_all():
-    return tasks
+async def get_all(db: AsyncSession):
+    result = await db.execute(select(Task))
+    return result.scalars().all()
 
 
-def get_by_id(task_id: int):
-    for task in tasks:
-        if task["id"] == task_id:
-            return task
-    return None
+async def get_by_id(db: AsyncSession, task_id: int):
+    result = await db.execute(
+        select(Task).where(Task.id == task_id)
+    )
+    return result.scalar_one_or_none()
 
 
-def create(task: dict):
-    tasks.append(task)
+async def create(db: AsyncSession, task: Task):
+    db.add(task)
+    await db.commit()
+    await db.refresh(task)
     return task
 
 
-def update(task_id: int, data: dict):
-    task = get_by_id(task_id)
-
-    if task is None:
-        return None
-
-    task["title"] = data["title"]
-    task["description"] = data["description"]
-
+async def update(db: AsyncSession, task: Task):
+    await db.commit()
+    await db.refresh(task)
     return task
 
 
-def delete(task_id: int):
-    task = get_by_id(task_id)
-
-    if task is None:
-        return False
-
-    tasks.remove(task)
-    return True
+async def delete(db: AsyncSession, task: Task):
+    await db.delete(task)
+    await db.commit()
