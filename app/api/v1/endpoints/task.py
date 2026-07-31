@@ -54,3 +54,4 @@ async def delete_task(
     service: TaskService = Depends(get_task_service),
 ):
     await service.delete_task(task_id)
+
