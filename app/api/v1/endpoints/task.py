@@ -1,9 +1,13 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.dependencies.auth import get_current_user
 from app.dependencies.task import get_task_service
+from app.models.task_enum import (
+    TaskPriority,
+    TaskStatus,
+)
 from app.models.user import User
 from app.schemas.task import (
     TaskCreate,
@@ -20,9 +24,20 @@ router = APIRouter()
     response_model=List[TaskResponse],
 )
 async def get_tasks(
+    status: TaskStatus | None = Query(default=None),
+    priority: TaskPriority | None = Query(default=None),
+    assignee_id: int | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1, le=100),
     service: TaskService = Depends(get_task_service),
 ):
-    return await service.get_tasks()
+    return await service.get_tasks(
+        status=status,
+        priority=priority,
+        assignee_id=assignee_id,
+        page=page,
+        limit=limit,
+    )
 
 
 @router.get(
@@ -52,12 +67,15 @@ async def create_task(
     )
 
 
-@router.put("/{task_id}", response_model=TaskResponse)
+@router.put(
+    "/{task_id}",
+    response_model=TaskResponse,
+)
 async def update_task(
     task_id: int,
     task: TaskUpdate,
-    service: TaskService = Depends(get_task_service),
     current_user: User = Depends(get_current_user),
+    service: TaskService = Depends(get_task_service),
 ):
     return await service.update_task(
         task_id,
@@ -72,8 +90,8 @@ async def update_task(
 )
 async def delete_task(
     task_id: int,
-    service: TaskService = Depends(get_task_service),
     current_user: User = Depends(get_current_user),
+    service: TaskService = Depends(get_task_service),
 ):
     await service.delete_task(
         task_id,

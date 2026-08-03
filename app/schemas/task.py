@@ -45,3 +45,19 @@ class TaskResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,
     )
+
+class TaskFilter(BaseModel):
+    status: TaskStatus | None = None
+    priority: TaskPriority | None = None
+    assignee_id: int | None = None
+
+    page: int = Field(
+        default=1,
+        ge=1,
+    )
+
+    limit: int = Field(
+        default=10,
+        ge=1,
+        le=100,
+    )

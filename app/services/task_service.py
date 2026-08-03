@@ -6,15 +6,32 @@ from app.models.task import Task
 from app.models.user import User
 from app.repositories import task_repository
 from app.schemas.task import TaskCreate, TaskUpdate
-
+from app.models.task_enum import (
+    TaskPriority,
+    TaskStatus,
+)
 
 class TaskService:
 
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_tasks(self):
-        return await task_repository.get_all(self.db)
+    async def get_tasks(
+        self,
+        status: TaskStatus | None = None,
+        priority: TaskPriority | None = None,
+        assignee_id: int | None = None,
+        page: int = 1,
+        limit: int = 10,
+    ):
+        return await task_repository.get_all(
+            self.db,
+            status=status,
+            priority=priority,
+            assignee_id=assignee_id,
+            page=page,
+            limit=limit,
+        )
 
     async def get_task(self, task_id: int):
         return await task_repository.get_by_id(
