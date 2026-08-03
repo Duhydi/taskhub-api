@@ -2,7 +2,11 @@ from app.models.user import User
 from app.repositories.user import UserRepository
 from app.schemas.auth import Token
 from app.schemas.user import UserRegister
-from app.utils.jwt import create_access_token
+from app.utils.jwt import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+)
 from app.utils.security import hash_password, verify_password
 
 
@@ -65,8 +69,51 @@ class UserService:
                 "sub": user.email,
             }
         )
+        refresh_token = create_refresh_token(
+            {
+                "sub": user.email,
+            }
+)
+        return Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+        )
+    
+    async def refresh_access_token(
+        self,
+        refresh_token: str,
+    ) -> Token:
+
+        payload = decode_token(refresh_token)
+
+        if payload is None:
+            raise ValueError("Invalid refresh token")
+
+        email = payload.get("sub")
+
+        if email is None:
+            raise ValueError("Invalid refresh token")
+
+        user = await self.repo.get_by_email(email)
+
+        if user is None:
+            raise ValueError("User not found")
+
+        access_token = create_access_token(
+            {
+                "sub": user.email,
+            }
+        )
+
+        new_refresh_token = create_refresh_token(
+            {
+                "sub": user.email,
+            }
+        )
 
         return Token(
             access_token=access_token,
+            refresh_token=new_refresh_token,
             token_type="bearer",
         )

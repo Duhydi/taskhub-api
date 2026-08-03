@@ -1,10 +1,11 @@
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.task import Task
+from app.models.user import User
 from app.repositories import task_repository
 from app.schemas.task import TaskCreate, TaskUpdate
 
-from fastapi import HTTPException, status
 
 class TaskService:
 
@@ -20,10 +21,15 @@ class TaskService:
             task_id,
         )
 
-    async def create_task(self, task: TaskCreate):
+    async def create_task(
+        self,
+        task: TaskCreate,
+        current_user: User,
+    ):
         new_task = Task(
             title=task.title,
             description=task.description,
+            created_by=current_user.id,
         )
 
         return await task_repository.create(
@@ -55,7 +61,10 @@ class TaskService:
             db_task,
         )
 
-    async def delete_task(self, task_id: int):
+    async def delete_task(
+        self,
+        task_id: int,
+    ):
         db_task = await task_repository.get_by_id(
             self.db,
             task_id,

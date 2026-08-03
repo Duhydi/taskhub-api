@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     access_token_expire_minutes: int = 60
 
+    refresh_token_expire_days: int = 7
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",
