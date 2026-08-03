@@ -5,7 +5,7 @@ from app.models.task import Task
 from app.models.user import User
 from app.repositories import task_repository
 from app.schemas.task import TaskCreate, TaskUpdate
-
+from app.dependencies.permissions import check_task_permission
 
 class TaskService:
 
@@ -38,9 +38,10 @@ class TaskService:
         )
 
     async def update_task(
-        self,
-        task_id: int,
-        task: TaskUpdate,
+    self,
+    task_id: int,
+    task: TaskUpdate,
+    current_user: User,
     ):
         db_task = await task_repository.get_by_id(
             self.db,
@@ -52,6 +53,10 @@ class TaskService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Task not found",
             )
+        check_task_permission(
+        current_user,
+        db_task,
+        )
 
         db_task.title = task.title
         db_task.description = task.description
@@ -64,6 +69,7 @@ class TaskService:
     async def delete_task(
         self,
         task_id: int,
+        current_user: User,
     ):
         db_task = await task_repository.get_by_id(
             self.db,
@@ -75,6 +81,10 @@ class TaskService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Task not found",
             )
+        check_task_permission(
+            current_user,
+            db_task,
+        )
 
         await task_repository.delete(
             self.db,

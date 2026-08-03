@@ -52,18 +52,17 @@ async def create_task(
     )
 
 
-@router.put(
-    "/{task_id}",
-    response_model=TaskResponse,
-)
+@router.put("/{task_id}", response_model=TaskResponse)
 async def update_task(
     task_id: int,
     task: TaskUpdate,
     service: TaskService = Depends(get_task_service),
+    current_user: User = Depends(get_current_user),
 ):
     return await service.update_task(
         task_id,
         task,
+        current_user,
     )
 
 
@@ -74,5 +73,9 @@ async def update_task(
 async def delete_task(
     task_id: int,
     service: TaskService = Depends(get_task_service),
+    current_user: User = Depends(get_current_user),
 ):
-    await service.delete_task(task_id)
+    await service.delete_task(
+        task_id,
+        current_user,
+    )
