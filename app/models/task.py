@@ -1,3 +1,11 @@
+from sqlalchemy import DateTime
+from sqlalchemy import Enum as SqlEnum
+from sqlalchemy import func
+
+from app.models.task_enum import (
+    TaskPriority,
+    TaskStatus,
+)
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String
@@ -27,11 +35,36 @@ class Task(Base):
         nullable=False,
     )
 
+    status: Mapped[TaskStatus] = mapped_column(
+        SqlEnum(TaskStatus),
+        default=TaskStatus.TODO,
+        nullable=False,
+    )
+
+    priority: Mapped[TaskPriority] = mapped_column(
+        SqlEnum(TaskPriority),
+        default=TaskPriority.MEDIUM,
+        nullable=False,
+    )
     created_by: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
     )
 
+    assignee_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=True,
+    )
+    created_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+
+    updated_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
     owner: Mapped["User"] = relationship(
         back_populates="tasks",
     )

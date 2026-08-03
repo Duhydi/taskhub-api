@@ -1,27 +1,31 @@
-from pydantic import BaseModel, Field
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.models.task_enum import (
+    TaskPriority,
+    TaskStatus,
+)
 
 
 class TaskCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=100)
     description: str = Field(..., min_length=1, max_length=500)
 
+    status: TaskStatus = TaskStatus.TODO
+    priority: TaskPriority = TaskPriority.MEDIUM
+
+    assignee_id: int | None = None
+
 
 class TaskUpdate(BaseModel):
     title: str = Field(..., min_length=1, max_length=100)
     description: str = Field(..., min_length=1, max_length=500)
 
+    status: TaskStatus
+    priority: TaskPriority
 
-from pydantic import BaseModel, ConfigDict
-
-
-class TaskCreate(BaseModel):
-    title: str
-    description: str
-
-
-class TaskUpdate(BaseModel):
-    title: str
-    description: str
+    assignee_id: int | None = None
 
 
 class TaskResponse(BaseModel):
@@ -29,4 +33,15 @@ class TaskResponse(BaseModel):
     title: str
     description: str
 
-    model_config = ConfigDict(from_attributes=True)
+    status: TaskStatus
+    priority: TaskPriority
+
+    created_by: int
+    assignee_id: int | None
+
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
