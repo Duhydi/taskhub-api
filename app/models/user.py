@@ -8,9 +8,12 @@ from sqlalchemy import String
 from sqlalchemy import func
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
-
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.task import Task
 
 class UserRole(str, Enum):
     ADMIN = "ADMIN"
@@ -66,4 +69,8 @@ class User(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
+    )
+
+    tasks: Mapped[list["Task"]] = relationship(
+    back_populates="owner",
     )
