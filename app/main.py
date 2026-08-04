@@ -20,6 +20,12 @@ from app.api.v1.endpoints.workspace_member import (
 from app.api.v1.endpoints.project import (
     router as project_router,
 )
+from app.api.v1.endpoints.label import (
+    router as label_router,
+)
+from app.api.v1.endpoints.comment import (
+    router as comment_router,
+)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting TaskHub API...")
@@ -30,6 +36,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.version,
+    description=(
+        "TaskHub is a task management API supporting "
+        "users, workspaces, projects, tasks, labels, "
+        "comments, JWT authentication, RBAC, pagination, "
+        "and Redis caching."
+    ),
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
     lifespan=lifespan,
 )
 
@@ -47,9 +62,8 @@ app.include_router(
 
 app.include_router(
     task_router,
-    prefix="/api/v1/tasks",
+    prefix="/api/v1",
 )
-
 app.include_router(
     user_router,
     prefix="/api/v1",
@@ -68,5 +82,13 @@ app.include_router(
 )
 app.include_router(
     project_router,
+    prefix="/api/v1",
+)
+app.include_router(
+    label_router,
+    prefix="/api/v1",
+)
+app.include_router(
+    comment_router,
     prefix="/api/v1",
 )

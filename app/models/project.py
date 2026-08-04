@@ -62,3 +62,13 @@ class Project(Base):
         "Workspace",
         back_populates="projects",
     )
+    tasks = relationship(
+        "Task",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
+    labels = relationship(
+        "Label",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )

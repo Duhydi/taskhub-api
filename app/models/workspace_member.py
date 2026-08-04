@@ -37,6 +37,7 @@ class WorkspaceMember(Base):
     role: Mapped[WorkspaceMemberRole] = mapped_column(
         SqlEnum(WorkspaceMemberRole),
         default=WorkspaceMemberRole.VIEWER,
+        nullable=False,
     )
 
     workspace = relationship(

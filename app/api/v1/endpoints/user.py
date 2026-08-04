@@ -1,12 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+)
 
+from app.core.api_responses import (
+    MUTATION_RESPONSES,
+    RESOURCE_RESPONSES,
+)
 from app.dependencies.auth import get_current_user
 from app.dependencies.user import get_user_service
 from app.models.user import User
 from app.schemas.user import (
+    ChangePasswordRequest,
     UserResponse,
     UserUpdate,
-    ChangePassword,
 )
 from app.services.user import UserService
 
@@ -20,18 +29,28 @@ router = APIRouter(
     "/me",
     response_model=UserResponse,
     summary="Get current user profile",
+    description=(
+        "Return the profile of the authenticated user."
+    ),
+    responses=RESOURCE_RESPONSES,
 )
 async def get_me(
     current_user: User = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ):
-    return await service.get_me(current_user)
+    return await service.get_me(
+        current_user=current_user,
+    )
 
 
 @router.patch(
     "/me",
     response_model=UserResponse,
     summary="Update current user profile",
+    description=(
+        "Partially update the authenticated user's profile."
+    ),
+    responses=MUTATION_RESPONSES,
 )
 async def update_me(
     data: UserUpdate,
@@ -44,19 +63,24 @@ async def update_me(
             username=data.username,
         )
 
-    except ValueError as e:
+    except ValueError as exc:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(e),
-        )
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
 
 
-@router.post(
+@router.patch(
     "/change-password",
     summary="Change current user password",
+    description=(
+        "Change the authenticated user's password after "
+        "verifying the current password."
+    ),
+    responses=MUTATION_RESPONSES,
 )
 async def change_password(
-    data: ChangePassword,
+    data: ChangePasswordRequest,
     current_user: User = Depends(get_current_user),
     service: UserService = Depends(get_user_service),
 ):
@@ -71,8 +95,8 @@ async def change_password(
             "message": "Password changed successfully",
         }
 
-    except ValueError as e:
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+            detail=str(exc),
+        ) from exc

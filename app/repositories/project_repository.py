@@ -57,3 +57,30 @@ class ProjectRepository:
     ):
         await self.db.delete(project)
         await self.db.commit()
+
+    async def get_by_workspace(
+        self,
+        workspace_id: int,
+    ):
+        result = await self.db.execute(
+            select(Project)
+            .where(
+                Project.workspace_id == workspace_id
+            )
+            .order_by(Project.created_at.desc())
+        )
+
+        return result.scalars().all()
+    
+    async def get_workspace_id(
+        self,
+        project_id: int,
+    ):
+        project = await self.get_by_id(
+            project_id
+        )
+
+        if project is None:
+            return None
+
+        return project.workspace_id
