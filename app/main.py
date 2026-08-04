@@ -6,6 +6,11 @@ from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.task import router as task_router
 from app.core.config import settings
 from app.api.v1.endpoints.user import router as user_router
+from app.middlewares.logging import logging_middleware
+from app.exceptions.handlers import (
+    AppException,
+    app_exception_handler,
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -20,6 +25,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.middleware("http")(logging_middleware)
 
 @app.get("/")
 def root():
@@ -39,4 +45,8 @@ app.include_router(
 app.include_router(
     user_router,
     prefix="/api/v1",
+)
+app.add_exception_handler(
+    AppException,
+    app_exception_handler,
 )

@@ -4,6 +4,7 @@ from fastapi import status
 from fastapi.security import OAuth2PasswordBearer
 
 from app.dependencies.user import get_user_service
+from app.models.user import UserRole
 from app.services.user import UserService
 from app.utils.jwt import decode_token
 
@@ -41,3 +42,19 @@ async def get_current_user(
         )
 
     return user
+
+
+def require_role(role: UserRole):
+
+    async def checker(
+        current_user=Depends(get_current_user),
+    ):
+        if current_user.role != role:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Permission denied",
+            )
+
+        return current_user
+
+    return checker

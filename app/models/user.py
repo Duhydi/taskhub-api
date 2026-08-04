@@ -1,13 +1,33 @@
-from sqlalchemy import Boolean, DateTime, Integer, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from enum import Enum
+
+from sqlalchemy import Boolean
+from sqlalchemy import DateTime
+from sqlalchemy import Enum as SqlEnum
+from sqlalchemy import Integer
+from sqlalchemy import String
+from sqlalchemy import func
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.task import Task
+
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    MEMBER = "MEMBER"
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
 
     username: Mapped[str] = mapped_column(
         String(50),
@@ -28,6 +48,12 @@ class User(Base):
         nullable=False,
     )
 
+    role: Mapped[UserRole] = mapped_column(
+        SqlEnum(UserRole),
+        default=UserRole.MEMBER,
+        nullable=False,
+    )
+
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
@@ -43,4 +69,8 @@ class User(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
+    )
+
+    tasks: Mapped[list["Task"]] = relationship(
+    back_populates="owner",
     )

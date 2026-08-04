@@ -1,18 +1,37 @@
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.dependencies.permissions import check_task_permission
 from app.models.task import Task
+from app.models.user import User
 from app.repositories import task_repository
 from app.schemas.task import TaskCreate, TaskUpdate
-
-from fastapi import HTTPException, status
+from app.models.task_enum import (
+    TaskPriority,
+    TaskStatus,
+)
 
 class TaskService:
 
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_tasks(self):
-        return await task_repository.get_all(self.db)
+    async def get_tasks(
+        self,
+        status: TaskStatus | None = None,
+        priority: TaskPriority | None = None,
+        assignee_id: int | None = None,
+        page: int = 1,
+        limit: int = 10,
+    ):
+        return await task_repository.get_all(
+            self.db,
+            status=status,
+            priority=priority,
+            assignee_id=assignee_id,
+            page=page,
+            limit=limit,
+        )
 
     async def get_task(self, task_id: int):
         return await task_repository.get_by_id(
@@ -20,10 +39,18 @@ class TaskService:
             task_id,
         )
 
-    async def create_task(self, task: TaskCreate):
+    async def create_task(
+        self,
+        task: TaskCreate,
+        current_user: User,
+    ):
         new_task = Task(
             title=task.title,
             description=task.description,
+            status=task.status,
+            priority=task.priority,
+            assignee_id=task.assignee_id,
+            created_by=current_user.id,
         )
 
         return await task_repository.create(
@@ -35,6 +62,7 @@ class TaskService:
         self,
         task_id: int,
         task: TaskUpdate,
+        current_user: User,
     ):
         db_task = await task_repository.get_by_id(
             self.db,
@@ -47,15 +75,27 @@ class TaskService:
                 detail="Task not found",
             )
 
+        check_task_permission(
+            current_user,
+            db_task,
+        )
+
         db_task.title = task.title
         db_task.description = task.description
+        db_task.status = task.status
+        db_task.priority = task.priority
+        db_task.assignee_id = task.assignee_id
 
         return await task_repository.update(
             self.db,
             db_task,
         )
 
-    async def delete_task(self, task_id: int):
+    async def delete_task(
+        self,
+        task_id: int,
+        current_user: User,
+    ) -> None:
         db_task = await task_repository.get_by_id(
             self.db,
             task_id,
@@ -66,6 +106,11 @@ class TaskService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Task not found",
             )
+
+        check_task_permission(
+            current_user,
+            db_task,
+        )
 
         await task_repository.delete(
             self.db,
