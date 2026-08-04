@@ -15,6 +15,7 @@ from app.models.task_enum import (
     TaskPriority,
     TaskStatus,
 )
+from app.models.comment import Comment
 from app.models.label import Label
 if TYPE_CHECKING:
     from app.models.project import Project
@@ -103,4 +104,9 @@ class Task(Base):
         "Label",
         secondary="task_labels",
         back_populates="tasks",
+    )
+    comments: Mapped[list["Comment"]] = relationship(
+        "Comment",
+        back_populates="task",
+        cascade="all, delete-orphan",
     )

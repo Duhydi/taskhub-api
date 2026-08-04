@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 
 from fastapi import (
     BackgroundTasks,
@@ -13,20 +12,24 @@ from app.core.redis import (
     clear_task_cache,
     redis_client,
 )
-from app.dependencies.permissions import (
-    check_task_permission,
-)
+from app.dependencies.rbac import require_workspace_role
 from app.models.task import Task
 from app.models.task_enum import (
     TaskPriority,
     TaskStatus,
 )
-from app.models.user import User
+from app.models.user import User, UserRole
+from app.models.workspace_member_enum import (
+    WorkspaceMemberRole,
+)
 from app.repositories import task_repository
 from app.repositories.project_repository import (
     ProjectRepository,
 )
 from app.repositories.user import UserRepository
+from app.repositories.workspace_member_repository import (
+    WorkspaceMemberRepository,
+)
 from app.schemas.task import (
     TaskCreate,
     TaskUpdate,
@@ -42,18 +45,30 @@ class TaskService:
         self.db = db
         self.project_repo = ProjectRepository(db)
         self.user_repo = UserRepository(db)
+        self.member_repo = WorkspaceMemberRepository(db)
 
     async def get_tasks(
         self,
         project_id: int,
+        current_user: User,
         status_filter: TaskStatus | None = None,
         priority: TaskPriority | None = None,
         assignee_id: int | None = None,
         page: int = 1,
         limit: int = 10,
     ):
-        await self._get_project_or_404(
+        project = await self._get_project_or_404(
             project_id
+        )
+
+        await self._require_roles(
+            workspace_id=project.workspace_id,
+            current_user=current_user,
+            allowed_roles=(
+                WorkspaceMemberRole.OWNER,
+                WorkspaceMemberRole.EDITOR,
+                WorkspaceMemberRole.VIEWER,
+            ),
         )
 
         cache_key = (
@@ -95,17 +110,25 @@ class TaskService:
     async def get_task(
         self,
         task_id: int,
+        current_user: User,
     ):
-        task = await task_repository.get_by_id(
-            self.db,
-            task_id,
+        task = await self._get_task_or_404(
+            task_id
         )
 
-        if task is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Task not found",
-            )
+        project = await self._get_project_or_404(
+            task.project_id
+        )
+
+        await self._require_roles(
+            workspace_id=project.workspace_id,
+            current_user=current_user,
+            allowed_roles=(
+                WorkspaceMemberRole.OWNER,
+                WorkspaceMemberRole.EDITOR,
+                WorkspaceMemberRole.VIEWER,
+            ),
+        )
 
         return task
 
@@ -116,22 +139,23 @@ class TaskService:
         current_user: User,
         background_tasks: BackgroundTasks,
     ):
-        await self._get_project_or_404(
+        project = await self._get_project_or_404(
             project_id
         )
 
-        assignee = None
+        await self._require_roles(
+            workspace_id=project.workspace_id,
+            current_user=current_user,
+            allowed_roles=(
+                WorkspaceMemberRole.OWNER,
+                WorkspaceMemberRole.EDITOR,
+            ),
+        )
 
-        if task.assignee_id is not None:
-            assignee = await self.user_repo.get_by_id(
-                task.assignee_id
-            )
-
-            if assignee is None:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Assignee not found",
-                )
+        assignee = await self._validate_assignee(
+            workspace_id=project.workspace_id,
+            assignee_id=task.assignee_id,
+        )
 
         new_task = Task(
             project_id=project_id,
@@ -167,44 +191,37 @@ class TaskService:
         task_id: int,
         task: TaskUpdate,
         current_user: User,
+        background_tasks: BackgroundTasks,
     ):
-        db_task = await task_repository.get_by_id(
-            self.db,
-            task_id,
+        db_task = await self._get_task_or_404(
+            task_id
         )
 
-        if db_task is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Task not found",
-            )
+        project = await self._get_project_or_404(
+            db_task.project_id
+        )
 
-        check_task_permission(
-            current_user,
-            db_task,
+        await self._require_roles(
+            workspace_id=project.workspace_id,
+            current_user=current_user,
+            allowed_roles=(
+                WorkspaceMemberRole.OWNER,
+                WorkspaceMemberRole.EDITOR,
+            ),
         )
 
         update_data = task.model_dump(
             exclude_unset=True,
         )
 
-        old_assignee_id = db_task.assignee_id
+        previous_assignee_id = db_task.assignee_id
+        new_assignee = None
 
         if "assignee_id" in update_data:
-            new_assignee_id = update_data[
-                "assignee_id"
-            ]
-
-            if new_assignee_id is not None:
-                assignee = await self.user_repo.get_by_id(
-                    new_assignee_id
-                )
-
-                if assignee is None:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Assignee not found",
-                    )
+            new_assignee = await self._validate_assignee(
+                workspace_id=project.workspace_id,
+                assignee_id=update_data["assignee_id"],
+            )
 
         for field, value in update_data.items():
             setattr(
@@ -222,6 +239,19 @@ class TaskService:
             db_task.project_id
         )
 
+        assignee_changed = (
+            "assignee_id" in update_data
+            and update_data["assignee_id"]
+            != previous_assignee_id
+        )
+
+        if assignee_changed and new_assignee is not None:
+            background_tasks.add_task(
+                send_assign_email,
+                new_assignee.email,
+                updated_task.title,
+            )
+
         return updated_task
 
     async def delete_task(
@@ -229,20 +259,20 @@ class TaskService:
         task_id: int,
         current_user: User,
     ) -> None:
-        db_task = await task_repository.get_by_id(
-            self.db,
-            task_id,
+        db_task = await self._get_task_or_404(
+            task_id
         )
 
-        if db_task is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Task not found",
-            )
+        project = await self._get_project_or_404(
+            db_task.project_id
+        )
 
-        check_task_permission(
-            current_user,
-            db_task,
+        await self._require_roles(
+            workspace_id=project.workspace_id,
+            current_user=current_user,
+            allowed_roles=(
+                WorkspaceMemberRole.OWNER,
+            ),
         )
 
         project_id = db_task.project_id
@@ -254,6 +284,62 @@ class TaskService:
 
         await clear_task_cache(
             project_id
+        )
+
+    async def _validate_assignee(
+        self,
+        workspace_id: int,
+        assignee_id: int | None,
+    ):
+        if assignee_id is None:
+            return None
+
+        assignee = await self.user_repo.get_by_id(
+            assignee_id
+        )
+
+        if assignee is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Assignee not found",
+            )
+
+        member = await self.member_repo.get_member(
+            workspace_id=workspace_id,
+            user_id=assignee_id,
+        )
+
+        if member is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Assignee is not a member "
+                    "of this workspace"
+                ),
+            )
+
+        return assignee
+
+    async def _require_roles(
+        self,
+        workspace_id: int,
+        current_user: User,
+        allowed_roles: tuple[
+            WorkspaceMemberRole,
+            ...,
+        ],
+    ) -> None:
+        if current_user.role == UserRole.ADMIN:
+            return
+
+        member = await self.member_repo.get_member(
+            workspace_id=workspace_id,
+            user_id=current_user.id,
+        )
+
+        require_workspace_role(
+            member,
+            *allowed_roles,
         )
 
     async def _get_project_or_404(
@@ -271,6 +357,23 @@ class TaskService:
             )
 
         return project
+
+    async def _get_task_or_404(
+        self,
+        task_id: int,
+    ):
+        task = await task_repository.get_by_id(
+            self.db,
+            task_id,
+        )
+
+        if task is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Task not found",
+            )
+
+        return task
 
     @staticmethod
     def _serialize_task(

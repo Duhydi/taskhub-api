@@ -16,6 +16,7 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.models.task import Task
     from app.models.refresh_token import RefreshToken
+    from app.models.comment import Comment
 
 
 class UserRole(str, Enum):
@@ -99,4 +100,8 @@ class User(Base):
     workspace_members = relationship(
         "WorkspaceMember",
         back_populates="user",
+    )
+    comments: Mapped[list["Comment"]] = relationship(
+        "Comment",
+        back_populates="author",
     )

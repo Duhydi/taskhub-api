@@ -32,8 +32,9 @@ async def create_label(
     service: LabelService = Depends(get_label_service),
 ):
     return await service.create_label(
-        project_id,
-        data,
+        project_id=project_id,
+        data=data,
+        current_user=current_user,
     )
 
 
@@ -47,7 +48,8 @@ async def get_labels(
     service: LabelService = Depends(get_label_service),
 ):
     return await service.get_labels(
-        project_id
+        project_id=project_id,
+        current_user=current_user,
     )
 
 
@@ -62,8 +64,9 @@ async def update_label(
     service: LabelService = Depends(get_label_service),
 ):
     return await service.update_label(
-        label_id,
-        data,
+        label_id=label_id,
+        data=data,
+        current_user=current_user,
     )
 
 
@@ -77,11 +80,12 @@ async def delete_label(
     service: LabelService = Depends(get_label_service),
 ):
     await service.delete_label(
-        label_id
+        label_id=label_id,
+        current_user=current_user,
     )
 
     return Response(
-        status_code=status.HTTP_204_NO_CONTENT
+        status_code=status.HTTP_204_NO_CONTENT,
     )
 
 
@@ -95,8 +99,9 @@ async def assign_label(
     service: LabelService = Depends(get_label_service),
 ):
     return await service.assign_label(
-        task_id,
-        label_id,
+        task_id=task_id,
+        label_id=label_id,
+        current_user=current_user,
     )
 
 
@@ -110,6 +115,7 @@ async def remove_label(
     service: LabelService = Depends(get_label_service),
 ):
     return await service.remove_label(
-        task_id,
-        label_id,
+        task_id=task_id,
+        label_id=label_id,
+        current_user=current_user,
     )

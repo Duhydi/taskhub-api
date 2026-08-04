@@ -58,6 +58,7 @@ async def get_project_tasks(
 ):
     return await service.get_tasks(
         project_id=project_id,
+        current_user=current_user,
         status_filter=task_status,
         priority=priority,
         assignee_id=assignee_id,
@@ -96,7 +97,8 @@ async def get_task(
     service: TaskService = Depends(get_task_service),
 ):
     return await service.get_task(
-        task_id
+        task_id=task_id,
+        current_user=current_user,
     )
 
 
@@ -107,6 +109,7 @@ async def get_task(
 async def update_task(
     task_id: int,
     task: TaskUpdate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ):
@@ -114,6 +117,7 @@ async def update_task(
         task_id=task_id,
         task=task,
         current_user=current_user,
+        background_tasks=background_tasks,
     )
 
 

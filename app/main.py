@@ -23,6 +23,9 @@ from app.api.v1.endpoints.project import (
 from app.api.v1.endpoints.label import (
     router as label_router,
 )
+from app.api.v1.endpoints.comment import (
+    router as comment_router,
+)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting TaskHub API...")
@@ -74,5 +77,9 @@ app.include_router(
 )
 app.include_router(
     label_router,
+    prefix="/api/v1",
+)
+app.include_router(
+    comment_router,
     prefix="/api/v1",
 )

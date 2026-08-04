@@ -6,7 +6,7 @@ from app.models.task_label import TaskLabel
 from app.models.user import User
 from app.models.workspace import Workspace
 from app.models.workspace_member import WorkspaceMember
-
+from app.models.comment import Comment
 __all__ = [
     "User",
     "Task",
@@ -16,4 +16,5 @@ __all__ = [
     "Project",
     "Label",
     "TaskLabel",
+    "Comment",
 ]

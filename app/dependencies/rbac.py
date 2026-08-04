@@ -1,25 +1,34 @@
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import status
+from fastapi import HTTPException, status
 
-from app.dependencies.auth import get_current_user
-from app.models.user import User
-from app.models.user import UserRole
+from app.models.user import User, UserRole
+from app.models.workspace_member import WorkspaceMember
+from app.models.workspace_member_enum import (
+    WorkspaceMemberRole,
+)
 
 
-async def require_admin(
-    current_user: User = Depends(get_current_user),
-):
+def require_workspace_role(
+    member: WorkspaceMember | None,
+    *allowed_roles: WorkspaceMemberRole,
+) -> None:
+    if member is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a workspace member",
+        )
+
+    if member.role not in allowed_roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permission denied",
+        )
+
+
+def require_admin(
+    current_user: User,
+) -> None:
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin only",
         )
-
-    return current_user
-
-
-async def require_member(
-    current_user: User = Depends(get_current_user),
-):
-    return current_user
