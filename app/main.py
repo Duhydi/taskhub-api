@@ -11,7 +11,15 @@ from app.exceptions.handlers import (
     AppException,
     app_exception_handler,
 )
-
+from app.api.v1.endpoints.workspace import (
+    router as workspace_router,
+)
+from app.api.v1.endpoints.workspace_member import (
+    router as workspace_member_router,
+)
+from app.api.v1.endpoints.project import (
+    router as project_router,
+)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting TaskHub API...")
@@ -49,4 +57,16 @@ app.include_router(
 app.add_exception_handler(
     AppException,
     app_exception_handler,
+)
+app.include_router(
+    workspace_router,
+    prefix="/api/v1",
+)
+app.include_router(
+    workspace_member_router,
+    prefix="/api/v1",
+)
+app.include_router(
+    project_router,
+    prefix="/api/v1",
 )

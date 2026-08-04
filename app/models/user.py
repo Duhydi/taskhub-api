@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean
 from sqlalchemy import DateTime
@@ -11,9 +12,11 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
-from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from app.models.task import Task
+    from app.models.refresh_token import RefreshToken
+
 
 class UserRole(str, Enum):
     ADMIN = "ADMIN"
@@ -81,4 +84,19 @@ class User(Base):
         "Task",
         foreign_keys="Task.assignee_id",
         back_populates="assignee",
+    )
+
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+        "RefreshToken",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    owned_workspaces = relationship(
+        "Workspace",
+        back_populates="owner",
+    )
+    workspace_members = relationship(
+        "WorkspaceMember",
+        back_populates="user",
     )
