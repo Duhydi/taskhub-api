@@ -36,6 +36,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.version,
+    description=(
+        "TaskHub is a task management API supporting "
+        "users, workspaces, projects, tasks, labels, "
+        "comments, JWT authentication, RBAC, pagination, "
+        "and Redis caching."
+    ),
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
     lifespan=lifespan,
 )
 

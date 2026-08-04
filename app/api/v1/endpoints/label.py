@@ -5,6 +5,10 @@ from fastapi import (
     status,
 )
 
+from app.core.api_responses import (
+    MUTATION_RESPONSES,
+    RESOURCE_RESPONSES,
+)
 from app.dependencies.auth import get_current_user
 from app.dependencies.label import get_label_service
 from app.models.user import User
@@ -24,6 +28,13 @@ router = APIRouter(
     "/projects/{project_id}/labels",
     response_model=LabelResponse,
     status_code=status.HTTP_201_CREATED,
+    summary="Create project label",
+    description=(
+        "Create a label in a project. "
+        "Only ADMIN, workspace OWNER, or EDITOR "
+        "can perform this action."
+    ),
+    responses=MUTATION_RESPONSES,
 )
 async def create_label(
     project_id: int,
@@ -41,6 +52,13 @@ async def create_label(
 @router.get(
     "/projects/{project_id}/labels",
     response_model=list[LabelResponse],
+    summary="List project labels",
+    description=(
+        "Return all labels belonging to a project. "
+        "The authenticated user must have access "
+        "to the project's workspace."
+    ),
+    responses=RESOURCE_RESPONSES,
 )
 async def get_labels(
     project_id: int,
@@ -56,6 +74,13 @@ async def get_labels(
 @router.patch(
     "/labels/{label_id}",
     response_model=LabelResponse,
+    summary="Update label",
+    description=(
+        "Partially update a label name or color. "
+        "Only ADMIN, workspace OWNER, or EDITOR "
+        "can perform this action."
+    ),
+    responses=MUTATION_RESPONSES,
 )
 async def update_label(
     label_id: int,
@@ -73,6 +98,13 @@ async def update_label(
 @router.delete(
     "/labels/{label_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete label",
+    description=(
+        "Delete a label from its project. "
+        "Only ADMIN, workspace OWNER, or EDITOR "
+        "can perform this action."
+    ),
+    responses=RESOURCE_RESPONSES,
 )
 async def delete_label(
     label_id: int,
@@ -91,6 +123,14 @@ async def delete_label(
 
 @router.post(
     "/tasks/{task_id}/labels/{label_id}",
+    summary="Assign label to task",
+    description=(
+        "Assign a label to a task. "
+        "The task and label must belong to the same project. "
+        "Only ADMIN, workspace OWNER, or EDITOR "
+        "can perform this action."
+    ),
+    responses=MUTATION_RESPONSES,
 )
 async def assign_label(
     task_id: int,
@@ -107,6 +147,13 @@ async def assign_label(
 
 @router.delete(
     "/tasks/{task_id}/labels/{label_id}",
+    summary="Remove label from task",
+    description=(
+        "Remove a label from a task. "
+        "Only ADMIN, workspace OWNER, or EDITOR "
+        "can perform this action."
+    ),
+    responses=MUTATION_RESPONSES,
 )
 async def remove_label(
     task_id: int,

@@ -5,6 +5,10 @@ from fastapi import (
     status,
 )
 
+from app.core.api_responses import (
+    MUTATION_RESPONSES,
+    RESOURCE_RESPONSES,
+)
 from app.dependencies.auth import get_current_user
 from app.dependencies.comment import (
     get_comment_service,
@@ -28,6 +32,13 @@ router = APIRouter(
     "/tasks/{task_id}/comments",
     response_model=CommentResponse,
     status_code=status.HTTP_201_CREATED,
+    summary="Create task comment",
+    description=(
+        "Add a comment to a task. "
+        "The authenticated user must belong to "
+        "the task's workspace."
+    ),
+    responses=MUTATION_RESPONSES,
 )
 async def create_comment(
     task_id: int,
@@ -47,6 +58,13 @@ async def create_comment(
 @router.get(
     "/tasks/{task_id}/comments",
     response_model=list[CommentResponse],
+    summary="List task comments",
+    description=(
+        "Return all comments belonging to a task. "
+        "The authenticated user must belong to "
+        "the task's workspace."
+    ),
+    responses=RESOURCE_RESPONSES,
 )
 async def get_comments(
     task_id: int,
@@ -64,6 +82,12 @@ async def get_comments(
 @router.patch(
     "/comments/{comment_id}",
     response_model=CommentResponse,
+    summary="Update comment",
+    description=(
+        "Update a comment. Only the comment author "
+        "or an ADMIN can perform this action."
+    ),
+    responses=MUTATION_RESPONSES,
 )
 async def update_comment(
     comment_id: int,
@@ -83,6 +107,12 @@ async def update_comment(
 @router.delete(
     "/comments/{comment_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete comment",
+    description=(
+        "Delete a comment. The comment author, "
+        "workspace OWNER, or ADMIN can perform this action."
+    ),
+    responses=RESOURCE_RESPONSES,
 )
 async def delete_comment(
     comment_id: int,
