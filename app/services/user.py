@@ -47,9 +47,24 @@ class UserService:
         password: str,
     ) -> Token:
 
-        user = await self.repo.get_by_email(
-            email
-        )
+        print("=" * 50)
+        print("Email nhập:", email)
+
+        user = await self.repo.get_by_email(email)
+
+        print("User:", user)
+
+        if user:
+            print("DB email:", user.email)
+            print(
+                "Verify:",
+                verify_password(
+                    password,
+                    user.password_hash,
+                ),
+            )
+
+        print("=" * 50)
 
         if user is None:
             raise ValueError(
@@ -65,15 +80,13 @@ class UserService:
             )
 
         access_token = create_access_token(
-            {
-                "sub": user.email,
-            }
+            {"sub": user.email}
         )
+
         refresh_token = create_refresh_token(
-            {
-                "sub": user.email,
-            }
-)
+            {"sub": user.email}
+        )
+
         return Token(
             access_token=access_token,
             refresh_token=refresh_token,
