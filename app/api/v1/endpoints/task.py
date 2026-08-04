@@ -9,19 +9,13 @@ from fastapi import (
     status,
 )
 
-from app.dependencies.auth import (
-    get_current_user,
-    require_role,
-)
+from app.dependencies.auth import get_current_user
 from app.dependencies.task import get_task_service
 from app.models.task_enum import (
     TaskPriority,
     TaskStatus,
 )
-from app.models.user import (
-    User,
-    UserRole,
-)
+from app.models.user import User
 from app.schemas.task import (
     TaskCreate,
     TaskResponse,
@@ -29,23 +23,42 @@ from app.schemas.task import (
 )
 from app.services.task_service import TaskService
 
-router = APIRouter()
+router = APIRouter(
+    tags=["Tasks"],
+)
 
 
 @router.get(
-    "/",
+    "/projects/{project_id}/tasks",
     response_model=List[TaskResponse],
 )
-async def get_tasks(
-    status: TaskStatus | None = Query(default=None),
-    priority: TaskPriority | None = Query(default=None),
-    assignee_id: int |None = Query(default=None),
-    page: int = Query(default=1, ge=1),
-    limit: int = Query(default=10, ge=1, le=100),
+async def get_project_tasks(
+    project_id: int,
+    task_status: TaskStatus | None = Query(
+        default=None,
+        alias="status",
+    ),
+    priority: TaskPriority | None = Query(
+        default=None,
+    ),
+    assignee_id: int | None = Query(
+        default=None,
+    ),
+    page: int = Query(
+        default=1,
+        ge=1,
+    ),
+    limit: int = Query(
+        default=10,
+        ge=1,
+        le=100,
+    ),
+    current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ):
     return await service.get_tasks(
-        status=status,
+        project_id=project_id,
+        status_filter=task_status,
         priority=priority,
         assignee_id=assignee_id,
         page=page,
@@ -53,37 +66,42 @@ async def get_tasks(
     )
 
 
+@router.post(
+    "/projects/{project_id}/tasks",
+    response_model=TaskResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_project_task(
+    project_id: int,
+    task: TaskCreate,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    service: TaskService = Depends(get_task_service),
+):
+    return await service.create_task(
+        project_id=project_id,
+        task=task,
+        current_user=current_user,
+        background_tasks=background_tasks,
+    )
+
+
 @router.get(
-    "/{task_id}",
+    "/tasks/{task_id}",
     response_model=TaskResponse,
 )
 async def get_task(
     task_id: int,
+    current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ):
-    return await service.get_task(task_id)
-
-
-@router.post(
-    "/",
-    response_model=TaskResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_task(
-    task: TaskCreate,
-    background_tasks: BackgroundTasks,
-    current_user: User = Depends(require_role(UserRole.ADMIN)),
-    service: TaskService = Depends(get_task_service),
-):
-    return await service.create_task(
-        task,
-        current_user,
-        background_tasks,
+    return await service.get_task(
+        task_id
     )
 
 
-@router.put(
-    "/{task_id}",
+@router.patch(
+    "/tasks/{task_id}",
     response_model=TaskResponse,
 )
 async def update_task(
@@ -93,14 +111,14 @@ async def update_task(
     service: TaskService = Depends(get_task_service),
 ):
     return await service.update_task(
-        task_id,
-        task,
-        current_user,
+        task_id=task_id,
+        task=task,
+        current_user=current_user,
     )
 
 
 @router.delete(
-    "/{task_id}",
+    "/tasks/{task_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_task(
@@ -109,8 +127,10 @@ async def delete_task(
     service: TaskService = Depends(get_task_service),
 ):
     await service.delete_task(
-        task_id,
-        current_user,
+        task_id=task_id,
+        current_user=current_user,
     )
 
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return Response(
+        status_code=status.HTTP_204_NO_CONTENT,
+    )

@@ -1,19 +1,23 @@
+from datetime import datetime
+from typing import TYPE_CHECKING
+
 from sqlalchemy import DateTime
 from sqlalchemy import Enum as SqlEnum
+from sqlalchemy import ForeignKey
+from sqlalchemy import String
 from sqlalchemy import func
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
 
+from app.db.base import Base
 from app.models.task_enum import (
     TaskPriority,
     TaskStatus,
 )
-from typing import TYPE_CHECKING
-
-from sqlalchemy import ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from app.db.base import Base
-
+from app.models.label import Label
 if TYPE_CHECKING:
+    from app.models.project import Project
     from app.models.user import User
 
 
@@ -22,6 +26,12 @@ class Task(Base):
 
     id: Mapped[int] = mapped_column(
         primary_key=True,
+        index=True,
+    )
+
+    project_id: Mapped[int] = mapped_column(
+        ForeignKey("projects.id"),
+        nullable=False,
         index=True,
     )
 
@@ -46,6 +56,12 @@ class Task(Base):
         default=TaskPriority.MEDIUM,
         nullable=False,
     )
+
+    due_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
     created_by: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
@@ -55,17 +71,23 @@ class Task(Base):
         ForeignKey("users.id"),
         nullable=True,
     )
-    created_at: Mapped[DateTime] = mapped_column(
+
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
     )
 
-    updated_at: Mapped[DateTime] = mapped_column(
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         onupdate=func.now(),
     )
-    
+
+    project: Mapped["Project"] = relationship(
+        "Project",
+        back_populates="tasks",
+    )
+
     owner: Mapped["User"] = relationship(
         "User",
         foreign_keys=[created_by],
@@ -76,4 +98,9 @@ class Task(Base):
         "User",
         foreign_keys=[assignee_id],
         back_populates="assigned_tasks",
+    )
+    labels: Mapped[list["Label"]] = relationship(
+        "Label",
+        secondary="task_labels",
+        back_populates="tasks",
     )
