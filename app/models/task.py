@@ -65,6 +65,15 @@ class Task(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+    
     owner: Mapped["User"] = relationship(
-        back_populates="tasks",
+        "User",
+        foreign_keys=[created_by],
+        back_populates="created_tasks",
+    )
+
+    assignee: Mapped["User | None"] = relationship(
+        "User",
+        foreign_keys=[assignee_id],
+        back_populates="assigned_tasks",
     )

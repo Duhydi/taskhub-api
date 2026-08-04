@@ -71,6 +71,14 @@ class User(Base):
         onupdate=func.now(),
     )
 
-    tasks: Mapped[list["Task"]] = relationship(
-    back_populates="owner",
+    created_tasks: Mapped[list["Task"]] = relationship(
+        "Task",
+        foreign_keys="Task.created_by",
+        back_populates="owner",
+    )
+
+    assigned_tasks: Mapped[list["Task"]] = relationship(
+        "Task",
+        foreign_keys="Task.assignee_id",
+        back_populates="assignee",
     )

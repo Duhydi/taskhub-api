@@ -17,6 +17,10 @@ class Settings(BaseSettings):
 
     refresh_token_expire_days: int = 7
 
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

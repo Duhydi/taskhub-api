@@ -1,5 +1,5 @@
 from typing import List
-
+from fastapi import BackgroundTasks
 from fastapi import APIRouter, Depends, Query, status
 
 from app.dependencies.auth import get_current_user
@@ -58,14 +58,15 @@ async def get_task(
 )
 async def create_task(
     task: TaskCreate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     service: TaskService = Depends(get_task_service),
 ):
     return await service.create_task(
         task,
         current_user,
+        background_tasks,
     )
-
 
 @router.put(
     "/{task_id}",
