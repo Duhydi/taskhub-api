@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.dependencies.user import get_user_service
+from app.dependencies.auth_service import (
+    get_auth_service,
+)
 from app.schemas.auth import (
     Token,
     RefreshTokenRequest,
+    LogoutRequest,
 )
 from fastapi.security import OAuth2PasswordRequestForm
 from app.schemas.user import (
@@ -11,7 +14,7 @@ from app.schemas.user import (
     UserRegister,
     UserResponse,
 )
-from app.services.user import UserService
+from app.services.auth_service import AuthService
 
 router = APIRouter(
     prefix="/auth",
@@ -26,7 +29,7 @@ router = APIRouter(
 )
 async def register(
     data: UserRegister,
-    service: UserService = Depends(get_user_service),
+    service: AuthService = Depends(get_auth_service),
 ):
     try:
         return await service.register(data)
@@ -43,7 +46,7 @@ async def register(
 )
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    service: UserService = Depends(get_user_service),
+    service: AuthService = Depends(get_auth_service),
 ):
     try:
         return await service.login(
@@ -62,7 +65,7 @@ async def login(
 )
 async def refresh_token(
     data: RefreshTokenRequest,
-    service: UserService = Depends(get_user_service),
+    service: AuthService = Depends(get_auth_service),
 ):
     try:
         return await service.refresh_access_token(
@@ -71,5 +74,21 @@ async def refresh_token(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+        )
+
+@router.post("/logout")
+async def logout(
+    data: LogoutRequest,
+    service: AuthService = Depends(get_auth_service),
+):
+    try:
+        return await service.logout(
+            data.refresh_token
+        )
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )

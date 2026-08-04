@@ -1,13 +1,9 @@
 from app.models.user import User
 from app.repositories.user import UserRepository
-from app.schemas.auth import Token
-from app.schemas.user import UserRegister
-from app.utils.jwt import (
-    create_access_token,
-    create_refresh_token,
-    decode_token,
+from app.utils.security import (
+    hash_password,
+    verify_password,
 )
-from app.utils.security import hash_password, verify_password
 
 
 class UserService:
@@ -18,115 +14,54 @@ class UserService:
     ):
         self.repo = repo
 
-    async def register(
+    async def get_me(
         self,
-        data: UserRegister,
+        current_user: User,
     ):
-        existed = await self.repo.get_by_email(
-            data.email
-        )
+        return current_user
 
-        if existed:
-            raise ValueError(
-                "Email already exists"
-            )
-
-        user = User(
-            username=data.username,
-            email=data.email,
-            password_hash=hash_password(
-                data.password
-            ),
-        )
-
-        return await self.repo.create(user)
-
-    async def login(
+    async def update_profile(
         self,
-        email: str,
-        password: str,
-    ) -> Token:
+        current_user: User,
+        username: str,
+    ):
+        existed = await self.repo.get_by_username(
+            username
+        )
 
-        print("=" * 50)
-        print("Email nhập:", email)
-
-        user = await self.repo.get_by_email(email)
-
-        print("User:", user)
-
-        if user:
-            print("DB email:", user.email)
-            print(
-                "Verify:",
-                verify_password(
-                    password,
-                    user.password_hash,
-                ),
-            )
-
-        print("=" * 50)
-
-        if user is None:
-            raise ValueError(
-                "Invalid email or password"
-            )
-
-        if not verify_password(
-            password,
-            user.password_hash,
+        if (
+            existed
+            and existed.id != current_user.id
         ):
             raise ValueError(
-                "Invalid email or password"
+                "Username already exists"
             )
 
-        access_token = create_access_token(
-            {"sub": user.email}
+        current_user.username = username
+
+        return await self.repo.update(
+            current_user
         )
 
-        refresh_token = create_refresh_token(
-            {"sub": user.email}
-        )
-
-        return Token(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            token_type="bearer",
-        )
-    
-    async def refresh_access_token(
+    async def change_password(
         self,
-        refresh_token: str,
-    ) -> Token:
+        current_user: User,
+        old_password: str,
+        new_password: str,
+    ):
 
-        payload = decode_token(refresh_token)
+        if not verify_password(
+            old_password,
+            current_user.password_hash,
+        ):
+            raise ValueError(
+                "Old password is incorrect",
+            )
 
-        if payload is None:
-            raise ValueError("Invalid refresh token")
-
-        email = payload.get("sub")
-
-        if email is None:
-            raise ValueError("Invalid refresh token")
-
-        user = await self.repo.get_by_email(email)
-
-        if user is None:
-            raise ValueError("User not found")
-
-        access_token = create_access_token(
-            {
-                "sub": user.email,
-            }
+        current_user.password_hash = hash_password(
+            new_password,
         )
 
-        new_refresh_token = create_refresh_token(
-            {
-                "sub": user.email,
-            }
-        )
-
-        return Token(
-            access_token=access_token,
-            refresh_token=new_refresh_token,
-            token_type="bearer",
+        return await self.repo.update(
+            current_user,
         )

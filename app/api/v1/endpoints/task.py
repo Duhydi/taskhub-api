@@ -1,14 +1,27 @@
 from typing import List
-from fastapi import BackgroundTasks
-from fastapi import APIRouter, Depends, Query, status
 
-from app.dependencies.auth import get_current_user
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    Query,
+    Response,
+    status,
+)
+
+from app.dependencies.auth import (
+    get_current_user,
+    require_role,
+)
 from app.dependencies.task import get_task_service
 from app.models.task_enum import (
     TaskPriority,
     TaskStatus,
 )
-from app.models.user import User
+from app.models.user import (
+    User,
+    UserRole,
+)
 from app.schemas.task import (
     TaskCreate,
     TaskResponse,
@@ -26,7 +39,7 @@ router = APIRouter()
 async def get_tasks(
     status: TaskStatus | None = Query(default=None),
     priority: TaskPriority | None = Query(default=None),
-    assignee_id: int | None = Query(default=None),
+    assignee_id: int |None = Query(default=None),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=100),
     service: TaskService = Depends(get_task_service),
@@ -59,7 +72,7 @@ async def get_task(
 async def create_task(
     task: TaskCreate,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
     service: TaskService = Depends(get_task_service),
 ):
     return await service.create_task(
@@ -67,6 +80,7 @@ async def create_task(
         current_user,
         background_tasks,
     )
+
 
 @router.put(
     "/{task_id}",
@@ -98,3 +112,5 @@ async def delete_task(
         task_id,
         current_user,
     )
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
