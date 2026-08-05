@@ -1,64 +1,44 @@
-from app.schemas.error import ErrorResponse
+from typing import Any
 
+ApiResponses = dict[int | str, dict[str, Any]]
 
-BAD_REQUEST_RESPONSE = {
+BAD_REQUEST_RESPONSE: ApiResponses = {
     400: {
-        "model": ErrorResponse,
-        "description": "The request is invalid.",
+        "description": "Bad Request",
     },
 }
 
-UNAUTHORIZED_RESPONSE = {
+UNAUTHORIZED_RESPONSE: ApiResponses = {
     401: {
-        "model": ErrorResponse,
-        "description": (
-            "Access token is missing, invalid, or expired."
-        ),
+        "description": "Unauthorized",
     },
 }
 
-FORBIDDEN_RESPONSE = {
+FORBIDDEN_RESPONSE: ApiResponses = {
     403: {
-        "model": ErrorResponse,
-        "description": (
-            "The authenticated user does not have permission."
-        ),
+        "description": "Forbidden",
     },
 }
 
-NOT_FOUND_RESPONSE = {
+NOT_FOUND_RESPONSE: ApiResponses = {
     404: {
-        "model": ErrorResponse,
-        "description": "The requested resource was not found.",
+        "description": "Resource Not Found",
     },
 }
 
-CONFLICT_RESPONSE = {
+CONFLICT_RESPONSE: ApiResponses = {
     409: {
-        "model": ErrorResponse,
-        "description": (
-            "The request conflicts with existing data."
-        ),
+        "description": "Conflict",
     },
 }
 
-
-AUTH_RESPONSES = {
-    **UNAUTHORIZED_RESPONSE,
-}
-
-RBAC_RESPONSES = {
-    **UNAUTHORIZED_RESPONSE,
-    **FORBIDDEN_RESPONSE,
-}
-
-RESOURCE_RESPONSES = {
+RESOURCE_RESPONSES: ApiResponses = {
     **UNAUTHORIZED_RESPONSE,
     **FORBIDDEN_RESPONSE,
     **NOT_FOUND_RESPONSE,
 }
 
-MUTATION_RESPONSES = {
+MUTATION_RESPONSES: ApiResponses = {
     **BAD_REQUEST_RESPONSE,
     **UNAUTHORIZED_RESPONSE,
     **FORBIDDEN_RESPONSE,

@@ -1,4 +1,3 @@
-from typing import List
 
 from fastapi import (
     APIRouter,
@@ -34,7 +33,7 @@ router = APIRouter(
 
 @router.get(
     "/projects/{project_id}/tasks",
-    response_model=List[TaskResponse],
+    response_model=list[TaskResponse],
     summary="List project tasks",
     description=(
         "Return paginated tasks in a project. "

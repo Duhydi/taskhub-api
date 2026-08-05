@@ -66,7 +66,7 @@ class LabelService:
             return await self.label_repo.create(
                 label
             )
-        except IntegrityError:
+        except IntegrityError as exc:
             await self.db.rollback()
 
             raise HTTPException(
@@ -75,7 +75,7 @@ class LabelService:
                     "Label name already exists "
                     "in this project"
                 ),
-            )
+            ) from exc
 
     async def get_labels(
         self,
@@ -154,7 +154,7 @@ class LabelService:
             return await self.label_repo.update(
                 label
             )
-        except IntegrityError:
+        except IntegrityError as exc:
             await self.db.rollback()
 
             raise HTTPException(
@@ -163,8 +163,8 @@ class LabelService:
                     "Label name already exists "
                     "in this project"
                 ),
-            )
-
+            ) from exc
+        
     async def delete_label(
         self,
         label_id: int,
