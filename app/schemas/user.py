@@ -1,5 +1,7 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
+
 from app.models.user import UserRole
+
 
 class UserRegister(BaseModel):
     username: str
@@ -23,15 +25,9 @@ class UserResponse(BaseModel):
         "from_attributes": True
     }
 
-class UserUpdate(BaseModel):
-    username: str
-
-
 class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str
-
-from pydantic import BaseModel, Field
 
 
 class UserUpdate(BaseModel):

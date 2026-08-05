@@ -2,10 +2,13 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.mypy_cache/
+.ruff_cache/
 
 # Virtual Environment
 .venv/
 venv/
+.env.docker
 
 # VS Code
 .vscode/

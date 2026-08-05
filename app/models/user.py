@@ -1,25 +1,19 @@
-from enum import Enum
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean
-from sqlalchemy import DateTime
+from sqlalchemy import Boolean, DateTime, Integer, String, func
 from sqlalchemy import Enum as SqlEnum
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import func
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
 if TYPE_CHECKING:
-    from app.models.task import Task
-    from app.models.refresh_token import RefreshToken
     from app.models.comment import Comment
+    from app.models.refresh_token import RefreshToken
+    from app.models.task import Task
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     ADMIN = "ADMIN"
     MEMBER = "MEMBER"
 

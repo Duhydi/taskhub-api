@@ -3,23 +3,27 @@ from fastapi.responses import JSONResponse
 
 
 class AppException(Exception):
-
     def __init__(
         self,
-        message: str,
         status_code: int,
-    ):
-        self.message = message
+        detail: str,
+    ) -> None:
         self.status_code = status_code
+        self.detail = detail
+
+        super().__init__(detail)
 
 
 async def app_exception_handler(
     request: Request,
-    exc: AppException,
-):
+    exc: Exception,
+) -> JSONResponse:
+    if not isinstance(exc, AppException):
+        raise exc
+
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "detail": exc.message,
+            "detail": exc.detail,
         },
     )

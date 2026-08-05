@@ -2,11 +2,11 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependencies import get_db
-from app.repositories.workspace_repository import (
-    WorkspaceRepository,
-)
 from app.repositories.workspace_member_repository import (
     WorkspaceMemberRepository,
+)
+from app.repositories.workspace_repository import (
+    WorkspaceRepository,
 )
 from app.services.workspace_service import (
     WorkspaceService,

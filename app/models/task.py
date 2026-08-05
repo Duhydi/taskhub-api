@@ -1,22 +1,18 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy import Enum as SqlEnum
-from sqlalchemy import ForeignKey
-from sqlalchemy import String
-from sqlalchemy import func
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.comment import Comment
+from app.models.label import Label
 from app.models.task_enum import (
     TaskPriority,
     TaskStatus,
 )
-from app.models.comment import Comment
-from app.models.label import Label
+
 if TYPE_CHECKING:
     from app.models.project import Project
     from app.models.user import User

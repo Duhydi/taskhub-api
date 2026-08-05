@@ -11,14 +11,12 @@ from app.repositories.workspace_member_repository import (
 from app.repositories.workspace_repository import (
     WorkspaceRepository,
 )
-from app.services.project_service import (
-    ProjectService,
-)
+from app.services.project_service import ProjectService
 
 
 def get_project_service(
     db: AsyncSession = Depends(get_db),
-):
+) -> ProjectService:
     return ProjectService(
         repo=ProjectRepository(db),
         workspace_repo=WorkspaceRepository(db),

@@ -1,4 +1,7 @@
 from app.models.workspace_member import WorkspaceMember
+from app.models.workspace_member_enum import (
+    WorkspaceMemberRole,
+)
 from app.repositories.user import UserRepository
 from app.repositories.workspace_member_repository import (
     WorkspaceMemberRepository,
@@ -9,9 +12,7 @@ from app.repositories.workspace_repository import (
 from app.schemas.workspace_member import (
     WorkspaceMemberCreate,
 )
-from app.models.workspace_member_enum import (
-    WorkspaceMemberRole,
-)
+
 
 class WorkspaceMemberService:
 

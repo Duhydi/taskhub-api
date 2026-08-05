@@ -1,22 +1,16 @@
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy import Enum as SqlEnum
-from sqlalchemy import ForeignKey
-from sqlalchemy import String
-from sqlalchemy import func
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
 
-class ProjectStatus(str, Enum):
+class ProjectStatus(StrEnum):
     ACTIVE = "ACTIVE"
     ARCHIVED = "ARCHIVED"
-
 
 class Project(Base):
     __tablename__ = "projects"
