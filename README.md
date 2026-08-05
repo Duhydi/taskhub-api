@@ -290,12 +290,12 @@ DELETE /api/v1/comments/{comment_id}
 
 | Feature         | OWNER | EDITOR | VIEWER | ADMIN |
 | --------------- | :---: | :----: | :----: | :---: |
-| View Workspace  |  ✅   |   ✅   |   ✅   |  ✅   |
-| Manage Projects |  ✅   |   ✅   |   ❌   |  ✅   |
-| Archive Project |  ✅   |   ❌   |   ❌   |  ✅   |
-| Manage Tasks    |  ✅   |   ✅   |   ❌   |  ✅   |
-| Manage Labels   |  ✅   |   ✅   |   ❌   |  ✅   |
-| View Comments   |  ✅   |   ✅   |   ✅   |  ✅   |
+| View Workspace  |  ✓   |   ✓   |   ✓   |  ✓   |
+| Manage Projects |  ✓   |   ✓   |   X   |  ✓   |
+| Archive Project |  ✓   |   X   |   X   |  ✓   |
+| Manage Tasks    |  ✓   |   ✓   |   X   |  ✓   |
+| Manage Labels   |  ✓   |   ✓   |   X   |  ✓   |
+| View Comments   |  ✓   |   ✓   |   ✓   |  ✓   |
 
 ---
 
